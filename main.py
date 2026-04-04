@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.v1.router import api_router
 from core.config import settings
 from core.database import Base, engine
-from models import event, friendship, location, rsvp, user  # noqa: F401
+from models import event, friendship, location, refresh_token, rsvp, user  # noqa: F401
 
 
 @asynccontextmanager

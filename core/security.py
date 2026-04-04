@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from uuid import uuid4
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -7,7 +8,8 @@ from passlib.context import CryptContext
 from core.config import settings
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Use a pure-Python hash backend to avoid platform/version issues with bcrypt wheels.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -23,6 +25,7 @@ def _create_token(subject: str, expires_delta: timedelta, token_type: str) -> st
     payload: dict[str, Any] = {
         "sub": subject,
         "type": token_type,
+        "jti": str(uuid4()),
         "iat": int(now.timestamp()),
         "exp": int((now + expires_delta).timestamp()),
     }

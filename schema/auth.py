@@ -9,3 +9,7 @@ class TokenPair(BaseModel):
 
 class TokenRefreshRequest(BaseModel):
     refresh_token: str
+
+
+class TokenRevokeRequest(BaseModel):
+    refresh_token: str

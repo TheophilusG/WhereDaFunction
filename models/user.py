@@ -23,7 +23,8 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     events = relationship("Event", back_populates="host", cascade="all, delete-orphan")
-    rsvps = relationship("RSVP", back_populates="user", cascade="all, delete-orphan")
+    rsvps = relationship("RSVP", back_populates="user", cascade="all, delete-orphan", foreign_keys="RSVP.user_id")
     sent_friendships = relationship("Friendship", foreign_keys="Friendship.requester_id", back_populates="requester")
     received_friendships = relationship("Friendship", foreign_keys="Friendship.addressee_id", back_populates="addressee")
     location = relationship("UserLocation", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")

@@ -1,5 +1,6 @@
 from typing import List
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,9 +18,22 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./hapn.db"
     db_echo: bool = False
-    auto_create_tables: bool = True
+    auto_create_tables: bool = False
 
     cors_origins: List[str] = ["*"]
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def parse_debug_value(cls, value):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"1", "true", "yes", "on", "debug", "development"}:
+                return True
+            if normalized in {"0", "false", "no", "off", "release", "production"}:
+                return False
+        return value
 
 
 settings = Settings()
