@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from core.security import get_password_hash, verify_password
@@ -72,3 +72,27 @@ def update_user(db: Session, user: User, payload: UserUpdate) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+
+def search_users(db: Session, *, query: str, limit: int = 20) -> list[User]:
+    normalized = query.strip().lower()
+    if not normalized:
+        return []
+
+    prefix_pattern = f"{normalized}%"
+    contains_pattern = f"%{normalized}%"
+
+    return list(
+        db.scalars(
+            select(User)
+            .where(
+                or_(
+                    User.username.ilike(prefix_pattern),
+                    User.full_name.ilike(contains_pattern),
+                    User.email.ilike(prefix_pattern),
+                )
+            )
+            .order_by(User.username.asc())
+            .limit(limit)
+        ).all()
+    )

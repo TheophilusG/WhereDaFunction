@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from core.database import get_db
@@ -27,6 +27,18 @@ def update_me(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     return {"data": UserRead.model_validate(user), "error": None, "meta": None}
+
+
+@router.get("/search")
+def search_users(
+    query: str = Query(min_length=1, max_length=100),
+    limit: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    users = user_service.search_users(db, query=query, limit=limit)
+    data = [UserRead.model_validate(user) for user in users if user.id != current_user.id]
+    return {"data": data, "error": None, "meta": {"count": len(data), "limit": limit}}
 
 
 @router.get("/{user_id}")

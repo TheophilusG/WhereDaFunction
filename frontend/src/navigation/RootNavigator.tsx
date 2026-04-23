@@ -3,9 +3,11 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import CreateEventScreen from "../screens/CreateEventScreen";
+import EventDetailScreen from "../screens/EventDetailScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import EventsScreen from "../screens/EventsScreen";
+import FriendsScreen from "../screens/FriendsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -17,7 +19,9 @@ export default function RootNavigator() {
       {accessToken ? (
         <Stack.Navigator>
           <Stack.Screen name="Events" component={EventsScreen} />
+          <Stack.Screen name="Friends" component={FriendsScreen} />
           <Stack.Screen name="CreateEvent" component={CreateEventScreen} options={{ title: "Create Event" }} />
+          <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: "Event Details" }} />
         </Stack.Navigator>
       ) : (
         <Stack.Navigator>

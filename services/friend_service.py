@@ -5,6 +5,16 @@ from models.friendship import Friendship, FriendshipStatus
 from models.user import User
 
 
+def _user_preview(user: User) -> dict:
+    return {
+        "id": user.id,
+        "username": user.username,
+        "full_name": user.full_name,
+        "email": user.email,
+        "avatar_url": user.avatar_url,
+    }
+
+
 def send_friend_request(db: Session, *, requester_id: str, addressee_id: str) -> dict:
     if requester_id == addressee_id:
         raise ValueError("You cannot add yourself")
@@ -86,3 +96,57 @@ def list_friends(db: Session, user_id: str) -> list[User]:
         return []
 
     return list(db.scalars(select(User).where(User.id.in_(friend_ids))).all())
+
+
+def list_incoming_friend_requests(db: Session, *, user_id: str) -> list[dict]:
+    requests = db.scalars(
+        select(Friendship)
+        .where(
+            Friendship.addressee_id == user_id,
+            Friendship.status == FriendshipStatus.PENDING,
+        )
+        .order_by(Friendship.created_at.desc())
+    ).all()
+    if not requests:
+        return []
+
+    requester_ids = [request.requester_id for request in requests]
+    requesters = db.scalars(select(User).where(User.id.in_(requester_ids))).all()
+    requester_lookup = {requester.id: requester for requester in requesters}
+
+    return [
+        {
+            "friendship_id": request.id,
+            "created_at": request.created_at,
+            "user": _user_preview(requester_lookup[request.requester_id]),
+        }
+        for request in requests
+        if request.requester_id in requester_lookup
+    ]
+
+
+def list_outgoing_friend_requests(db: Session, *, user_id: str) -> list[dict]:
+    requests = db.scalars(
+        select(Friendship)
+        .where(
+            Friendship.requester_id == user_id,
+            Friendship.status == FriendshipStatus.PENDING,
+        )
+        .order_by(Friendship.created_at.desc())
+    ).all()
+    if not requests:
+        return []
+
+    addressee_ids = [request.addressee_id for request in requests]
+    addressees = db.scalars(select(User).where(User.id.in_(addressee_ids))).all()
+    addressee_lookup = {addressee.id: addressee for addressee in addressees}
+
+    return [
+        {
+            "friendship_id": request.id,
+            "created_at": request.created_at,
+            "user": _user_preview(addressee_lookup[request.addressee_id]),
+        }
+        for request in requests
+        if request.addressee_id in addressee_lookup
+    ]

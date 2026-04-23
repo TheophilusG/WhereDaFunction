@@ -15,6 +15,12 @@ export type User = {
   username: string;
   full_name: string;
   email: string;
+  phone?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
+  is_vendor?: boolean;
+  location_sharing?: boolean;
+  created_at?: string;
 };
 
 export type EventItem = {
@@ -77,5 +83,11 @@ export type RSVPRecord = {
   event_id: string;
   user_id: string;
   status: RSVPStatus;
+  created_at: string;
+};
+
+export type FriendRequestItem = {
+  friendship_id: string;
+  user: User;
   created_at: string;
 };

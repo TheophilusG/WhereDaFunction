@@ -52,6 +52,18 @@ def remove_friendship(
     return {"data": {"deleted": True}, "error": None, "meta": None}
 
 
+@router.get("/requests/incoming")
+def list_incoming_friend_requests(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    requests = friend_service.list_incoming_friend_requests(db, user_id=current_user.id)
+    return {"data": requests, "error": None, "meta": {"count": len(requests)}}
+
+
+@router.get("/requests/outgoing")
+def list_outgoing_friend_requests(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    requests = friend_service.list_outgoing_friend_requests(db, user_id=current_user.id)
+    return {"data": requests, "error": None, "meta": {"count": len(requests)}}
+
+
 @router.get("/events")
 def friends_events(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     events = event_service.list_events_friends_are_attending(db, current_user.id)

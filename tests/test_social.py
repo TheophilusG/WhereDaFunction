@@ -77,3 +77,46 @@ def test_location_update_and_friend_lookup(client: TestClient) -> None:
     )
     assert list_response.status_code == 200
     assert list_response.json()["meta"]["count"] == 1
+
+
+def test_pending_requests_and_user_search(client: TestClient) -> None:
+    user_a = register_user(client, "pending_a", "pending_a@example.com")
+    user_b = register_user(client, "pending_b", "pending_b@example.com")
+    user_c = register_user(client, "pending_c", "pending_c@example.com")
+
+    send_response = client.post(
+        f"{BASE}/friends/request",
+        json={"addressee_id": user_b["user"]["id"]},
+        headers=auth_header(user_a["tokens"]["access_token"]),
+    )
+    assert send_response.status_code == 201
+    friendship_id = send_response.json()["data"]["id"]
+
+    incoming_response = client.get(
+        f"{BASE}/friends/requests/incoming",
+        headers=auth_header(user_b["tokens"]["access_token"]),
+    )
+    assert incoming_response.status_code == 200
+    incoming_data = incoming_response.json()["data"]
+    assert len(incoming_data) == 1
+    assert incoming_data[0]["friendship_id"] == friendship_id
+    assert incoming_data[0]["user"]["id"] == user_a["user"]["id"]
+
+    outgoing_response = client.get(
+        f"{BASE}/friends/requests/outgoing",
+        headers=auth_header(user_a["tokens"]["access_token"]),
+    )
+    assert outgoing_response.status_code == 200
+    outgoing_data = outgoing_response.json()["data"]
+    assert len(outgoing_data) == 1
+    assert outgoing_data[0]["friendship_id"] == friendship_id
+    assert outgoing_data[0]["user"]["id"] == user_b["user"]["id"]
+
+    search_response = client.get(
+        f"{BASE}/users/search",
+        params={"query": "pending_c"},
+        headers=auth_header(user_a["tokens"]["access_token"]),
+    )
+    assert search_response.status_code == 200
+    results = search_response.json()["data"]
+    assert any(user["id"] == user_c["user"]["id"] for user in results)
