@@ -63,3 +63,19 @@ export type EventCreatePayload = {
   cover_image_url?: string;
   ticket_url?: string;
 };
+
+export type RSVPStatus = "going" | "interested" | "not_going";
+
+export type EventAttendee = {
+  user_id: string;
+  status: RSVPStatus;
+  created_at: string;
+};
+
+export type RSVPRecord = {
+  id: string;
+  event_id: string;
+  user_id: string;
+  status: RSVPStatus;
+  created_at: string;
+};
