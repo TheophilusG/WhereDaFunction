@@ -1,5 +1,5 @@
 import { api } from "./client";
-import { ApiEnvelope, FriendRequestItem } from "../types";
+import { ApiEnvelope, FriendEventActivity, FriendRequestItem } from "../types";
 
 export async function sendFriendRequest(addresseeId: string, accessToken: string) {
   const res = await api.post<ApiEnvelope<{ id: string }>>(
@@ -34,7 +34,7 @@ export async function acceptFriendRequest(friendshipId: string, accessToken: str
 }
 
 export async function listFriendsEvents(accessToken: string) {
-  const res = await api.get<ApiEnvelope<any[]>>("/friends/events", {
+  const res = await api.get<ApiEnvelope<FriendEventActivity[]>>("/friends/events", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   return res.data.data;

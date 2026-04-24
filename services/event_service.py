@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from models.event import Event, EventCategory, EventCity
 from models.friendship import Friendship, FriendshipStatus
 from models.rsvp import RSVP, RSVPStatus
+from models.user import User
 from schema.event import EventCreate, EventUpdate
 
 
@@ -196,14 +197,22 @@ def list_events_friends_are_attending(db: Session, user_id: str) -> list[dict]:
 
     event_ids = [rsvp.event_id for rsvp in rsvps]
     events = db.scalars(select(Event).where(Event.id.in_(event_ids))).all()
+    friends = db.scalars(select(User).where(User.id.in_(friend_ids))).all()
 
     event_lookup = {event.id: event for event in events}
+    friend_lookup = {friend.id: friend for friend in friends}
     return [
         {
             "friend_id": rsvp.user_id,
+            "friend": {
+                "id": friend_lookup[rsvp.user_id].id,
+                "username": friend_lookup[rsvp.user_id].username,
+                "full_name": friend_lookup[rsvp.user_id].full_name,
+                "avatar_url": friend_lookup[rsvp.user_id].avatar_url,
+            },
             "event": event_lookup.get(rsvp.event_id),
             "status": rsvp.status,
         }
         for rsvp in rsvps
-        if rsvp.event_id in event_lookup
+        if rsvp.event_id in event_lookup and rsvp.user_id in friend_lookup
     ]

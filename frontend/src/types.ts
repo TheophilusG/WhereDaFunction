@@ -91,3 +91,25 @@ export type FriendRequestItem = {
   user: User;
   created_at: string;
 };
+
+export type FriendPreview = {
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url?: string | null;
+};
+
+export type FriendEventActivity = {
+  friend_id: string;
+  friend: FriendPreview;
+  event: EventItem;
+  status: RSVPStatus;
+};
+
+export type FriendLocation = {
+  user_id: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+  updated_at: string;
+};

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi.testclient import TestClient
 
 
@@ -20,6 +22,23 @@ def register_user(client: TestClient, username: str, email: str) -> dict:
 
 def auth_header(access_token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {access_token}"}
+
+
+def event_payload() -> dict:
+    now = datetime.now(tz=timezone.utc)
+    return {
+        "title": "Friends Meetup",
+        "description": "Social meetup",
+        "category": "networking",
+        "location_name": "Marina",
+        "latitude": 25.2048,
+        "longitude": 55.2708,
+        "address": "Dubai Marina",
+        "city": "dubai",
+        "starts_at": (now + timedelta(hours=1)).isoformat(),
+        "ends_at": (now + timedelta(hours=2)).isoformat(),
+        "is_public": True,
+    }
 
 
 def test_friend_request_accept_and_list(client: TestClient) -> None:
@@ -120,3 +139,44 @@ def test_pending_requests_and_user_search(client: TestClient) -> None:
     assert search_response.status_code == 200
     results = search_response.json()["data"]
     assert any(user["id"] == user_c["user"]["id"] for user in results)
+
+
+def test_friends_events_feed(client: TestClient) -> None:
+    user_a = register_user(client, "feed_a", "feed_a@example.com")
+    user_b = register_user(client, "feed_b", "feed_b@example.com")
+
+    send_response = client.post(
+        f"{BASE}/friends/request",
+        json={"addressee_id": user_b["user"]["id"]},
+        headers=auth_header(user_a["tokens"]["access_token"]),
+    )
+    friendship_id = send_response.json()["data"]["id"]
+
+    client.patch(
+        f"{BASE}/friends/{friendship_id}/accept",
+        headers=auth_header(user_b["tokens"]["access_token"]),
+    )
+
+    create_response = client.post(
+        f"{BASE}/events",
+        json=event_payload(),
+        headers=auth_header(user_b["tokens"]["access_token"]),
+    )
+    event_id = create_response.json()["data"]["id"]
+
+    rsvp_response = client.post(
+        f"{BASE}/events/{event_id}/rsvp",
+        params={"status_value": "going"},
+        headers=auth_header(user_b["tokens"]["access_token"]),
+    )
+    assert rsvp_response.status_code == 200
+
+    feed_response = client.get(
+        f"{BASE}/friends/events",
+        headers=auth_header(user_a["tokens"]["access_token"]),
+    )
+    assert feed_response.status_code == 200
+    items = feed_response.json()["data"]
+    assert len(items) == 1
+    assert items[0]["friend"]["id"] == user_b["user"]["id"]
+    assert items[0]["event"]["id"] == event_id
