@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 
+from api.v1 import location as location_api
+
 
 BASE = "/api/v1"
 
@@ -180,3 +182,40 @@ def test_friends_events_feed(client: TestClient) -> None:
     assert len(items) == 1
     assert items[0]["friend"]["id"] == user_b["user"]["id"]
     assert items[0]["event"]["id"] == event_id
+
+
+def test_location_update_broadcasts_to_friends(client: TestClient, monkeypatch) -> None:
+    user_a = register_user(client, "ws_a", "ws_a@example.com")
+    user_b = register_user(client, "ws_b", "ws_b@example.com")
+
+    send_response = client.post(
+        f"{BASE}/friends/request",
+        json={"addressee_id": user_b["user"]["id"]},
+        headers=auth_header(user_a["tokens"]["access_token"]),
+    )
+    friendship_id = send_response.json()["data"]["id"]
+    client.patch(
+        f"{BASE}/friends/{friendship_id}/accept",
+        headers=auth_header(user_b["tokens"]["access_token"]),
+    )
+
+    sent_payloads: list[tuple[str, dict]] = []
+
+    async def fake_send_to_user(user_id: str, payload: dict) -> None:
+        sent_payloads.append((user_id, payload))
+
+    monkeypatch.setattr(location_api.manager, "send_to_user", fake_send_to_user)
+
+    response = client.post(
+        f"{BASE}/location/update",
+        json={"latitude": 25.205, "longitude": 55.271, "accuracy": 7.5},
+        headers=auth_header(user_b["tokens"]["access_token"]),
+    )
+    assert response.status_code == 200
+
+    assert len(sent_payloads) == 1
+    target_user_id, payload = sent_payloads[0]
+    assert target_user_id == user_a["user"]["id"]
+    assert payload["user_id"] == user_b["user"]["id"]
+    assert payload["latitude"] == 25.205
+    assert payload["longitude"] == 55.271

@@ -83,7 +83,7 @@ def list_friend_locations(db: Session = Depends(get_db), current_user=Depends(ge
 
 
 @router.post("/location/update")
-def update_location(
+async def update_location(
     payload: LocationUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -95,4 +95,16 @@ def update_location(
         longitude=payload.longitude,
         accuracy=payload.accuracy,
     )
+
+    friend_ids = [friend.id for friend in friend_service.list_friends(db, current_user.id)]
+    broadcast_payload = {
+        "user_id": current_user.id,
+        "latitude": location["latitude"],
+        "longitude": location["longitude"],
+        "accuracy": location["accuracy"],
+        "updated_at": location["updated_at"].isoformat(),
+    }
+    for friend_id in friend_ids:
+        await manager.send_to_user(friend_id, broadcast_payload)
+
     return {"data": location, "error": None, "meta": None}
