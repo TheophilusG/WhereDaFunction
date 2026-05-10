@@ -9,6 +9,7 @@ import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import EventsScreen from "../screens/EventsScreen";
 import FriendsScreen from "../screens/FriendsScreen";
+import MapScreen from "../screens/MapScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +21,7 @@ export default function RootNavigator() {
       {accessToken ? (
         <Stack.Navigator>
           <Stack.Screen name="Events" component={EventsScreen} />
+          <Stack.Screen name="Map" component={MapScreen} />
           <Stack.Screen name="Friends" component={FriendsScreen} />
           <Stack.Screen name="Activity" component={ActivityScreen} />
           <Stack.Screen name="CreateEvent" component={CreateEventScreen} options={{ title: "Create Event" }} />

@@ -31,6 +31,7 @@ export default function EventsScreen({ navigation }: any) {
   return (
     <View style={{ flex: 1, padding: 16, gap: 8 }}>
       <Button title="Create Event" onPress={() => navigation.navigate("CreateEvent")} />
+      <Button title="Map" onPress={() => navigation.navigate("Map")} />
       <Button title="Friends" onPress={() => navigation.navigate("Friends")} />
       <Button title="Activity" onPress={() => navigation.navigate("Activity")} />
       <Button title="Logout" onPress={logout} />
